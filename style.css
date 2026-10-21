@@ -11,3 +11,10 @@ main { padding: 8px 12px 24px; max-width: 720px; margin: 0 auto; }
 #place { flex: 1; min-width: 0; font-size: 16px; padding: 10px; border: 1px solid #b8bfc7; border-radius: 8px; }
 button { font: inherit; min-height: 44px; padding: 0 14px; border: 0; border-radius: 8px; background: #0b5fff; color: #fff; cursor: pointer; }
 #use-default { background: #5b6672; }
+.item { display: flex; align-items: center; gap: 10px; padding: 12px; margin-top: 8px; background: #fff; border: 1px solid #dde1e6; border-radius: 10px; }
+.item.active { border-color: #0b5fff; box-shadow: 0 0 0 2px #0b5fff33; }
+.info { flex: 1; min-width: 0; }
+.info strong { display: block; overflow-wrap: anywhere; }
+.meta { margin-top: 4px; font-size: .85rem; color: #5b6672; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tag { padding: 2px 8px; border-radius: 999px; background: #e6f0ff; color: #0b3fa8; font-size: .75rem; }
+.empty { padding: 16px; text-align: center; color: #5b6672; }

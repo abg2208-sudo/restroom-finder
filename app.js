@@ -85,6 +85,64 @@ async function fetchRestrooms(lat, lng) {
   return list.sort((a, b) => a.distance - b.distance);
 }
 
+function formatDistance(m) {
+  const ft = m * 3.28084;
+  return ft < 1000 ? Math.round(ft / 10) * 10 + ' ft' : (m / 1609.344).toFixed(1) + ' mi';
+}
+
+const resultsEl = $('results');
+const pinLayer = L.layerGroup().addTo(map);
+const markers = new Map();
+
+function render() {
+  pinLayer.clearLayers();
+  markers.clear();
+  resultsEl.replaceChildren();
+  if (!restrooms.length) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = 'No restrooms found nearby.';
+    resultsEl.append(li);
+    return;
+  }
+  for (const r of restrooms) {
+    const marker = L.marker([r.lat, r.lng], { title: r.name }).addTo(pinLayer);
+    marker.on('click', () => highlight(r.id, true));
+    markers.set(r.id, marker);
+
+    const li = document.createElement('li');
+    li.className = 'item';
+    li.dataset.id = r.id;
+    const info = document.createElement('div');
+    info.className = 'info';
+    const name = document.createElement('strong');
+    name.textContent = r.name;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = formatDistance(r.distance);
+    for (const [on, text] of [[r.accessible, 'Accessible'], [r.unisex, 'Unisex']]) {
+      if (!on) continue;
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = text;
+      meta.append(tag);
+    }
+    info.append(name, meta);
+    li.append(info);
+    li.addEventListener('click', () => {
+      highlight(r.id, false);
+      map.panTo([r.lat, r.lng]);
+    });
+    resultsEl.append(li);
+  }
+}
+
+function highlight(id, scroll) {
+  for (const li of resultsEl.querySelectorAll('.item')) li.classList.toggle('active', li.dataset.id === id);
+  if (scroll) resultsEl.querySelector(`[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  else markers.get(id)?.openTooltip();
+}
+
 let loadToken = 0;
 async function loadRestrooms(lat, lng, label) {
   const token = ++loadToken;
@@ -93,10 +151,12 @@ async function loadRestrooms(lat, lng, label) {
     const list = await fetchRestrooms(lat, lng);
     if (token !== loadToken) return;
     restrooms = list;
+    render();
     statusEl.textContent = `${label} · ${list.length} found (${source})`;
   } catch {
     if (token !== loadToken) return;
     restrooms = [];
+    render();
     statusEl.textContent = label + ' · couldn’t load restrooms. Try again.';
   }
 }
