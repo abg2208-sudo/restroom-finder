@@ -14,10 +14,12 @@ let youMarker = null;
 let origin = MIDTOWN;
 let restrooms = [];
 let source = '';
+let capped = false;
 
 const REFUGE = 'https://www.refugerestrooms.org/api/v1/restrooms/by_location';
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
 const RADIUS_M = 1500;
+const MAX_RESULTS = 50;
 
 function haversine(lat1, lng1, lat2, lng2) {
   const rad = Math.PI / 180;
@@ -33,7 +35,7 @@ async function fetchJson(url, opts = {}, timeoutMs = 8000) {
 }
 
 async function fromRefuge(lat, lng) {
-  const data = await fetchJson(`${REFUGE}?lat=${lat}&lng=${lng}&per_page=50&offset=0`);
+  const data = await fetchJson(`${REFUGE}?lat=${lat}&lng=${lng}&per_page=100&offset=0`);
   return data.filter((r) => r.latitude != null && r.longitude != null).map((r) => ({
     id: 'r' + r.id,
     name: r.name || 'Restroom',
@@ -83,7 +85,8 @@ async function fetchRestrooms(lat, lng) {
     source = 'OpenStreetMap';
   }
   for (const r of list) r.distance = haversine(lat, lng, r.lat, r.lng);
-  return list.sort((a, b) => a.distance - b.distance);
+  list.sort((a, b) => a.distance - b.distance);
+  return { list: list.slice(0, MAX_RESULTS), capped: list.length > MAX_RESULTS };
 }
 
 function formatDistance(m) {
@@ -92,6 +95,7 @@ function formatDistance(m) {
 }
 
 const resultsEl = $('results');
+const countEl = $('count');
 const pinLayer = L.layerGroup().addTo(map);
 const markers = new Map();
 
@@ -115,6 +119,8 @@ function render() {
   markers.clear();
   resultsEl.replaceChildren();
   const shown = visible();
+  countEl.textContent = !restrooms.length ? '' : capped ? `Showing the ${MAX_RESULTS} closest` : `${restrooms.length} restroom${restrooms.length === 1 ? '' : 's'} nearby`;
+  if (restrooms.length && shown.length !== restrooms.length) countEl.textContent += ` · ${shown.length} match filters`;
   if (!shown.length) {
     const li = document.createElement('li');
     li.className = 'empty';
@@ -173,14 +179,16 @@ async function loadRestrooms(lat, lng, label) {
   const token = ++loadToken;
   statusEl.textContent = label + ' · searching for restrooms…';
   try {
-    const list = await fetchRestrooms(lat, lng);
+    const res = await fetchRestrooms(lat, lng);
     if (token !== loadToken) return;
-    restrooms = list;
+    restrooms = res.list;
+    capped = res.capped;
     render();
-    statusEl.textContent = `${label} · ${list.length} found (${source})`;
+    statusEl.textContent = `${label} · ${restrooms.length} found (${source})`;
   } catch {
     if (token !== loadToken) return;
     restrooms = [];
+    capped = false;
     render();
     statusEl.textContent = label + ' · couldn’t load restrooms. Try again.';
   }
