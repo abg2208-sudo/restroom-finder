@@ -199,7 +199,26 @@ function render() {
     if (r.note) {
       const note = document.createElement('div');
       note.className = 'note';
-      note.textContent = trim120(r.note);
+      const full = r.note.replace(/\s+/g, ' ').trim();
+      const short = trim120(full);
+      const text = document.createElement('span');
+      text.textContent = short;
+      note.append(text);
+      if (short !== full) {
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'link';
+        toggle.textContent = 'more';
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const open = toggle.getAttribute('aria-expanded') !== 'true';
+          text.textContent = open ? full : short;
+          toggle.textContent = open ? 'less' : 'more';
+          toggle.setAttribute('aria-expanded', open);
+        });
+        note.append(' ', toggle);
+      }
       info.append(note);
     }
     if (r.hours) {
