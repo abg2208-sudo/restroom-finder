@@ -18,3 +18,4 @@ button { font: inherit; min-height: 44px; padding: 0 14px; border: 0; border-rad
 .meta { margin-top: 4px; font-size: .85rem; color: #5b6672; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .tag { padding: 2px 8px; border-radius: 999px; background: #e6f0ff; color: #0b3fa8; font-size: .75rem; }
 .empty { padding: 16px; text-align: center; color: #5b6672; }
+.btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 8px; background: #0b5fff; color: #fff; text-decoration: none; font-weight: 600; white-space: nowrap; }

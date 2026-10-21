@@ -11,6 +11,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 let youMarker = null;
+let origin = MIDTOWN;
 let restrooms = [];
 let source = '';
 
@@ -128,7 +129,15 @@ function render() {
       meta.append(tag);
     }
     info.append(name, meta);
-    li.append(info);
+    const dir = document.createElement('a');
+    dir.className = 'btn';
+    dir.textContent = 'Directions';
+    dir.target = '_blank';
+    dir.rel = 'noopener';
+    dir.href = 'https://www.google.com/maps/dir/?api=1&travelmode=walking' +
+      `&origin=${origin.lat},${origin.lng}&destination=${r.lat},${r.lng}`;
+    dir.addEventListener('click', (e) => e.stopPropagation());
+    li.append(info, dir);
     li.addEventListener('click', () => {
       highlight(r.id, false);
       map.panTo([r.lat, r.lng]);
@@ -162,6 +171,7 @@ async function loadRestrooms(lat, lng, label) {
 }
 
 function setLocation({ lat, lng, label }) {
+  origin = { lat, lng };
   map.setView([lat, lng], 16);
   if (youMarker) youMarker.remove();
   youMarker = L.circleMarker([lat, lng], {
