@@ -34,9 +34,13 @@ async function fetchJson(url, opts = {}, timeoutMs = 8000) {
   return res.json();
 }
 
+// Refuge listings are user-submitted; drop ones carrying links or HTML (spam).
+const SPAM_RE = /\bhttps?\b|\bwww\.|<\/|<[a-z]/i;
+const isSpam = (r) => [r.name, r.directions, r.comment].some((s) => typeof s === 'string' && SPAM_RE.test(s));
+
 async function fromRefuge(lat, lng) {
   const data = await fetchJson(`${REFUGE}?lat=${lat}&lng=${lng}&per_page=100&offset=0`);
-  return data.filter((r) => r.latitude != null && r.longitude != null).map((r) => ({
+  return data.filter((r) => r.latitude != null && r.longitude != null && !isSpam(r)).map((r) => ({
     id: 'r' + r.id,
     name: r.name || 'Restroom',
     lat: r.latitude,
