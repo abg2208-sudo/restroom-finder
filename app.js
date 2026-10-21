@@ -47,6 +47,7 @@ async function fromRefuge(lat, lng) {
     down: Number(r.downvote) || 0,
     note: String(r.directions || r.comment || '').trim(),
     hours: '',
+    changing: !!r.changing_table,
   }));
 }
 
@@ -73,6 +74,7 @@ async function fromOverpass(lat, lng) {
           down: 0,
           note: '',
           hours: t.opening_hours || '',
+          changing: t.changing_table === 'yes',
         };
       }).filter((r) => r.lat != null && r.lng != null);
     } catch (e) {
@@ -95,6 +97,7 @@ function dedupe(list) {
       dup.down += r.down;
       dup.note ||= r.note;
       dup.hours ||= r.hours;
+      dup.changing ||= r.changing;
     } else {
       out.push({ ...r });
     }
@@ -135,10 +138,10 @@ const countEl = $('count');
 const pinLayer = L.layerGroup().addTo(map);
 const markers = new Map();
 
-const filters = { accessible: false, unisex: false };
+const filters = { accessible: false, unisex: false, changing: false };
 
 function visible() {
-  return restrooms.filter((r) => (!filters.accessible || r.accessible) && (!filters.unisex || r.unisex));
+  return restrooms.filter((r) => (!filters.accessible || r.accessible) && (!filters.unisex || r.unisex) && (!filters.changing || r.changing));
 }
 
 for (const key of Object.keys(filters)) {
@@ -179,7 +182,7 @@ function render() {
     const meta = document.createElement('div');
     meta.className = 'meta';
     meta.textContent = formatDistance(r.distance);
-    for (const [on, text] of [[r.accessible, 'Accessible'], [r.unisex, 'Unisex']]) {
+    for (const [on, text] of [[r.accessible, 'Accessible'], [r.unisex, 'Unisex'], [r.changing, 'Changing table']]) {
       if (!on) continue;
       const tag = document.createElement('span');
       tag.className = 'tag';
