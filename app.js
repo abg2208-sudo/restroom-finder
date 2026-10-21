@@ -95,18 +95,34 @@ const resultsEl = $('results');
 const pinLayer = L.layerGroup().addTo(map);
 const markers = new Map();
 
+const filters = { accessible: false, unisex: false };
+
+function visible() {
+  return restrooms.filter((r) => (!filters.accessible || r.accessible) && (!filters.unisex || r.unisex));
+}
+
+for (const key of Object.keys(filters)) {
+  const btn = $('f-' + key);
+  btn.addEventListener('click', () => {
+    filters[key] = !filters[key];
+    btn.setAttribute('aria-pressed', filters[key]);
+    render();
+  });
+}
+
 function render() {
   pinLayer.clearLayers();
   markers.clear();
   resultsEl.replaceChildren();
-  if (!restrooms.length) {
+  const shown = visible();
+  if (!shown.length) {
     const li = document.createElement('li');
     li.className = 'empty';
-    li.textContent = 'No restrooms found nearby.';
+    li.textContent = restrooms.length ? 'No restrooms match these filters.' : 'No restrooms found nearby.';
     resultsEl.append(li);
     return;
   }
-  for (const r of restrooms) {
+  for (const r of shown) {
     const marker = L.marker([r.lat, r.lng], { title: r.name }).addTo(pinLayer);
     marker.on('click', () => highlight(r.id, true));
     markers.set(r.id, marker);
