@@ -232,7 +232,6 @@ async function locate() {
 }
 
 function failLocate(reason) {
-  form.hidden = false;
   setLocation({ ...MIDTOWN, label: `${reason}. Showing Midtown Manhattan` });
 }
 
@@ -258,6 +257,6 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-$('use-default').addEventListener('click', () => setLocation(MIDTOWN));
+$('use-location').addEventListener('click', locate);
 
 locate();
