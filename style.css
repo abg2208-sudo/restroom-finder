@@ -25,3 +25,4 @@ button { font: inherit; min-height: 44px; padding: 0 14px; border: 0; border-rad
 .count:empty { display: none; }
 .votes { font-size: .8rem; }
 .note { margin-top: 2px; font-size: .8rem; color: #6b7480; overflow-wrap: anywhere; }
+.hours { font-size: .8rem; overflow-wrap: anywhere; }

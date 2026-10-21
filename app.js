@@ -46,6 +46,7 @@ async function fromRefuge(lat, lng) {
     up: Number(r.upvote) || 0,
     down: Number(r.downvote) || 0,
     note: String(r.directions || r.comment || '').trim(),
+    hours: '',
   }));
 }
 
@@ -71,6 +72,7 @@ async function fromOverpass(lat, lng) {
           up: 0,
           down: 0,
           note: '',
+          hours: t.opening_hours || '',
         };
       }).filter((r) => r.lat != null && r.lng != null);
     } catch (e) {
@@ -92,6 +94,7 @@ function dedupe(list) {
       dup.up += r.up;
       dup.down += r.down;
       dup.note ||= r.note;
+      dup.hours ||= r.hours;
     } else {
       out.push({ ...r });
     }
@@ -195,6 +198,12 @@ function render() {
       note.className = 'note';
       note.textContent = trim120(r.note);
       info.append(note);
+    }
+    if (r.hours) {
+      const hours = document.createElement('span');
+      hours.className = 'hours';
+      hours.textContent = '🕒 ' + r.hours;
+      meta.append(hours);
     }
     info.append(meta);
     const dir = document.createElement('a');
