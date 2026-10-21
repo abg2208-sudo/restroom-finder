@@ -74,6 +74,22 @@ async function fromOverpass(lat, lng) {
   throw lastErr;
 }
 
+// Merge same-name listings within 50 m (e.g. Refuge + chain duplicates), OR-ing their tags.
+function dedupe(list) {
+  const norm = (n) => n.trim().toLowerCase().replace(/\s+/g, ' ');
+  const out = [];
+  for (const r of list) {
+    const dup = out.find((o) => norm(o.name) === norm(r.name) && haversine(o.lat, o.lng, r.lat, r.lng) <= 50);
+    if (dup) {
+      dup.accessible ||= r.accessible;
+      dup.unisex ||= r.unisex;
+    } else {
+      out.push({ ...r });
+    }
+  }
+  return out;
+}
+
 async function fetchRestrooms(lat, lng) {
   let list;
   try {
@@ -84,6 +100,7 @@ async function fetchRestrooms(lat, lng) {
     list = await fromOverpass(lat, lng);
     source = 'OpenStreetMap';
   }
+  list = dedupe(list);
   for (const r of list) r.distance = haversine(lat, lng, r.lat, r.lng);
   list.sort((a, b) => a.distance - b.distance);
   return { list: list.slice(0, MAX_RESULTS), capped: list.length > MAX_RESULTS };
