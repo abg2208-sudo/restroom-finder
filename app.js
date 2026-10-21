@@ -197,23 +197,43 @@ function setLocation({ lat, lng, label }) {
   loadRestrooms(lat, lng, label);
 }
 
-function askForPlace(reason) {
-  statusEl.textContent = reason;
-  form.hidden = false;
-  map.invalidateSize();
+const GEO_ERRORS = {
+  1: 'Location blocked. Allow it in your browser or iOS Settings → Privacy → Location Services',
+  2: 'Your device couldn’t determine its location',
+  3: 'Location timed out',
+};
+
+function getPosition(options) {
+  return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, options));
 }
 
-function locate() {
-  if (!navigator.geolocation) return askForPlace('Location unavailable. Enter a place:');
+// Low accuracy first (fast, cached OK). iOS often times out or reports "unavailable" with
+// high accuracy, so only retry with it if the first attempt timed out or had no fix.
+async function getLocation() {
+  try {
+    return await getPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 });
+  } catch (err) {
+    if (err.code === 1) throw err;
+    statusEl.textContent = 'Still looking for your location…';
+    return getPosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+  }
+}
+
+async function locate() {
+  if (!navigator.geolocation) return failLocate('Location isn’t supported in this browser');
   statusEl.textContent = 'Finding your location…';
-  navigator.geolocation.getCurrentPosition(
-    (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Near your location' }),
-    () => {
-      askForPlace('Location denied. Enter a place or use Midtown:');
-      setLocation({ ...MIDTOWN, label: 'Location denied. Showing Midtown Manhattan' });
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-  );
+  try {
+    const pos = await getLocation();
+    setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Near your location' });
+  } catch (err) {
+    const base = GEO_ERRORS[err.code] || 'Couldn’t get your location';
+    failLocate(err.message && err.code !== 1 ? `${base} (${err.message})` : base);
+  }
+}
+
+function failLocate(reason) {
+  form.hidden = false;
+  setLocation({ ...MIDTOWN, label: `${reason}. Showing Midtown Manhattan` });
 }
 
 async function geocode(query) {
