@@ -38,9 +38,16 @@ async function fetchJson(url, opts = {}, timeoutMs = 8000) {
 const SPAM_RE = /\bhttps?\b|\bwww\.|<\/|<[a-z]/i;
 const isSpam = (r) => [r.name, r.directions, r.comment].some((s) => typeof s === 'string' && SPAM_RE.test(s));
 
+// Coordinates come from third-party JSON and end up in a URL and map calls: force real numbers.
+function withValidCoords(list) {
+  return list
+    .map((r) => ({ ...r, lat: Number(r.lat), lng: Number(r.lng) }))
+    .filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lng) && Math.abs(r.lat) <= 90 && Math.abs(r.lng) <= 180);
+}
+
 async function fromRefuge(lat, lng) {
   const data = await fetchJson(`${REFUGE}?lat=${lat}&lng=${lng}&per_page=100&offset=0`);
-  return data.filter((r) => r.latitude != null && r.longitude != null && !isSpam(r)).map((r) => ({
+  return withValidCoords(data.filter((r) => r.latitude != null && r.longitude != null && !isSpam(r)).map((r) => ({
     id: 'r' + r.id,
     name: r.name || 'Restroom',
     lat: r.latitude,
@@ -52,7 +59,7 @@ async function fromRefuge(lat, lng) {
     note: String(r.directions || r.comment || '').trim(),
     hours: '',
     changing: !!r.changing_table,
-  }));
+  })));
 }
 
 async function fromOverpass(lat, lng) {
@@ -65,7 +72,7 @@ async function fromOverpass(lat, lng) {
         body: 'data=' + encodeURIComponent(q),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       }, 20000);
-      return data.elements.map((el) => {
+      return withValidCoords(data.elements.map((el) => {
         const t = el.tags || {};
         return {
           id: el.type[0] + el.id,
@@ -80,7 +87,7 @@ async function fromOverpass(lat, lng) {
           hours: t.opening_hours || '',
           changing: t.changing_table === 'yes',
         };
-      }).filter((r) => r.lat != null && r.lng != null);
+      }).filter((r) => r.lat != null && r.lng != null));
     } catch (e) {
       lastErr = e;
     }
@@ -251,7 +258,7 @@ function render() {
 
 function highlight(id, scroll) {
   for (const li of resultsEl.querySelectorAll('.item')) li.classList.toggle('active', li.dataset.id === id);
-  if (scroll) resultsEl.querySelector(`[data-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (scroll) resultsEl.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   else markers.get(id)?.openTooltip();
 }
 
