@@ -43,6 +43,8 @@ async function fromRefuge(lat, lng) {
     lng: r.longitude,
     accessible: !!r.accessible,
     unisex: !!r.unisex,
+    up: Number(r.upvote) || 0,
+    down: Number(r.downvote) || 0,
   }));
 }
 
@@ -65,6 +67,8 @@ async function fromOverpass(lat, lng) {
           lng: el.lon ?? el.center?.lon,
           accessible: t.wheelchair === 'yes',
           unisex: t.unisex === 'yes' || t.gender_neutral === 'yes',
+          up: 0,
+          down: 0,
         };
       }).filter((r) => r.lat != null && r.lng != null);
     } catch (e) {
@@ -83,6 +87,8 @@ function dedupe(list) {
     if (dup) {
       dup.accessible ||= r.accessible;
       dup.unisex ||= r.unisex;
+      dup.up += r.up;
+      dup.down += r.down;
     } else {
       out.push({ ...r });
     }
@@ -166,6 +172,12 @@ function render() {
       tag.className = 'tag';
       tag.textContent = text;
       meta.append(tag);
+    }
+    if (r.up + r.down > 0) {
+      const votes = document.createElement('span');
+      votes.className = 'votes';
+      votes.textContent = `👍 ${r.up} · 👎 ${r.down}`;
+      meta.append(votes);
     }
     info.append(name, meta);
     const dir = document.createElement('a');
