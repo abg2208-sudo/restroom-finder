@@ -45,6 +45,7 @@ async function fromRefuge(lat, lng) {
     unisex: !!r.unisex,
     up: Number(r.upvote) || 0,
     down: Number(r.downvote) || 0,
+    note: String(r.directions || r.comment || '').trim(),
   }));
 }
 
@@ -69,6 +70,7 @@ async function fromOverpass(lat, lng) {
           unisex: t.unisex === 'yes' || t.gender_neutral === 'yes',
           up: 0,
           down: 0,
+          note: '',
         };
       }).filter((r) => r.lat != null && r.lng != null);
     } catch (e) {
@@ -89,6 +91,7 @@ function dedupe(list) {
       dup.unisex ||= r.unisex;
       dup.up += r.up;
       dup.down += r.down;
+      dup.note ||= r.note;
     } else {
       out.push({ ...r });
     }
@@ -110,6 +113,13 @@ async function fetchRestrooms(lat, lng) {
   for (const r of list) r.distance = haversine(lat, lng, r.lat, r.lng);
   list.sort((a, b) => a.distance - b.distance);
   return { list: list.slice(0, MAX_RESULTS), capped: list.length > MAX_RESULTS };
+}
+
+function trim120(s, max = 120) {
+  s = s.replace(/\s+/g, ' ').trim();
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  return cut.slice(0, cut.lastIndexOf(' ') > 60 ? cut.lastIndexOf(' ') : max).trimEnd() + '…';
 }
 
 function formatDistance(m) {
@@ -179,7 +189,14 @@ function render() {
       votes.textContent = `👍 ${r.up} · 👎 ${r.down}`;
       meta.append(votes);
     }
-    info.append(name, meta);
+    info.append(name);
+    if (r.note) {
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.textContent = trim120(r.note);
+      info.append(note);
+    }
+    info.append(meta);
     const dir = document.createElement('a');
     dir.className = 'btn';
     dir.textContent = 'Directions';

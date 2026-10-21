@@ -24,3 +24,4 @@ button { font: inherit; min-height: 44px; padding: 0 14px; border: 0; border-rad
 .count { margin: 8px 2px 0; font-size: .9rem; color: #5b6672; font-weight: 600; }
 .count:empty { display: none; }
 .votes { font-size: .8rem; }
+.note { margin-top: 2px; font-size: .8rem; color: #6b7480; overflow-wrap: anywhere; }
