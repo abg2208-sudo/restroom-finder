@@ -282,6 +282,9 @@ async function getLocation() {
   }
 }
 
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
 async function locate() {
   if (!navigator.geolocation) return failLocate('Location isn’t supported in this browser');
   statusEl.textContent = 'Finding your location…';
@@ -295,6 +298,7 @@ async function locate() {
 }
 
 function failLocate(reason) {
+  if (isIOS()) reason += '. Check that Precise Location is on for Safari';
   setLocation({ ...MIDTOWN, label: `${reason}. Showing Midtown Manhattan` });
 }
 
