@@ -6,3 +6,8 @@ h1 { margin: 0; font-size: 1.25rem; }
 #map { height: 45vh; min-height: 260px; width: 100%; }
 main { padding: 8px 12px 24px; max-width: 720px; margin: 0 auto; }
 #results { list-style: none; margin: 0; padding: 0; }
+#place-form { display: flex; gap: 6px; padding: 8px 12px; background: #fff; border-bottom: 1px solid #dde1e6; }
+#place-form[hidden] { display: none; }
+#place { flex: 1; min-width: 0; font-size: 16px; padding: 10px; border: 1px solid #b8bfc7; border-radius: 8px; }
+button { font: inherit; min-height: 44px; padding: 0 14px; border: 0; border-radius: 8px; background: #0b5fff; color: #fff; cursor: pointer; }
+#use-default { background: #5b6672; }
